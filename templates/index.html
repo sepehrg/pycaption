@@ -5,6 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PyCaption - YouTube Video Captions</title>
     <style>
+      :root {
+        /* Dark theme variables (default) */
+        --bg-gradient-start: #1a1a2e;
+        --bg-gradient-end: #16213e;
+        --container-bg: #2d2d44;
+        --header-bg: #1e1e2e;
+        --header-text: #e0e0e0;
+        --section-bg: #3a3a52;
+        --section-border: #4a4a62;
+        --input-bg: #2d2d44;
+        --input-text: #e0e0e0;
+        --input-border: #5a5a72;
+        --input-placeholder: #a0a0b0;
+        --caption-item-bg: #2d2d44;
+        --caption-item-text: #e0e0e0;
+        --caption-item-hover: #4a4a62;
+        --text-muted: #a0a0b0;
+        --error-bg: #4a2c2c;
+        --error-text: #ff6b6b;
+        --spinner-border: #4a4a62;
+        --box-shadow: rgba(0, 0, 0, 0.3);
+      }
+
+      [data-theme="light"] {
+        /* Light theme variables */
+        --bg-gradient-start: #f0f2f5;
+        --bg-gradient-end: #e8ecf0;
+        --container-bg: #ffffff;
+        --header-bg: #4a90e2;
+        --header-text: #ffffff;
+        --section-bg: #f8f9fa;
+        --section-border: #e9ecef;
+        --input-bg: #ffffff;
+        --input-text: #333333;
+        --input-border: #ced4da;
+        --input-placeholder: #6c757d;
+        --caption-item-bg: #ffffff;
+        --caption-item-text: #333333;
+        --caption-item-hover: #f8f9fa;
+        --text-muted: #6c757d;
+        --error-bg: #f8d7da;
+        --error-text: #721c24;
+        --spinner-border: #dee2e6;
+        --box-shadow: rgba(0, 0, 0, 0.1);
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -13,25 +59,53 @@
 
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        background: linear-gradient(
+          135deg,
+          var(--bg-gradient-start) 0%,
+          var(--bg-gradient-end) 100%
+        );
         min-height: 100vh;
         padding: 20px;
+        transition: background 0.3s ease;
       }
 
       .container {
         max-width: 1400px;
         margin: 0 auto;
-        background: #2d2d44;
+        background: var(--container-bg);
         border-radius: 15px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 40px var(--box-shadow);
         overflow: hidden;
+        transition: background 0.3s ease, box-shadow 0.3s ease;
       }
 
       .header {
-        background: #1e1e2e;
-        color: #e0e0e0;
+        background: var(--header-bg);
+        color: var(--header-text);
         padding: 30px;
         text-align: center;
+        position: relative;
+        transition: background 0.3s ease, color 0.3s ease;
+      }
+
+      .theme-switcher {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 8px 16px;
+        color: var(--header-text);
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      }
+
+      .theme-switcher:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
       }
 
       .header h1 {
@@ -46,8 +120,9 @@
 
       .url-input-section {
         padding: 30px;
-        background: #3a3a52;
-        border-bottom: 1px solid #4a4a62;
+        background: var(--section-bg);
+        border-bottom: 1px solid var(--section-border);
+        transition: background 0.3s ease, border-color 0.3s ease;
       }
 
       .input-group {
@@ -60,12 +135,13 @@
       .url-input {
         flex: 1;
         padding: 15px 20px;
-        border: 2px solid #5a5a72;
+        border: 2px solid var(--input-border);
         border-radius: 10px;
         font-size: 16px;
-        background: #2d2d44;
-        color: #e0e0e0;
-        transition: border-color 0.3s ease;
+        background: var(--input-bg);
+        color: var(--input-text);
+        transition: border-color 0.3s ease, background 0.3s ease,
+          color 0.3s ease;
       }
 
       .url-input:focus {
@@ -74,7 +150,7 @@
       }
 
       .url-input::placeholder {
-        color: #a0a0b0;
+        color: var(--input-placeholder);
       }
 
       .load-btn {
@@ -102,17 +178,19 @@
         text-align: center;
         padding: 40px;
         font-size: 18px;
-        color: #a0a0b0;
+        color: var(--text-muted);
+        transition: color 0.3s ease;
       }
 
       .spinner {
-        border: 3px solid #4a4a62;
+        border: 3px solid var(--spinner-border);
         border-top: 3px solid #667eea;
         border-radius: 50%;
         width: 40px;
         height: 40px;
         animation: spin 1s linear infinite;
         margin: 0 auto 20px;
+        transition: border-color 0.3s ease;
       }
 
       @keyframes spin {
@@ -149,10 +227,11 @@
       }
 
       .video-info {
-        background: #3a3a52;
+        background: var(--section-bg);
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
+        transition: background 0.3s ease;
       }
 
       .upload-btn {
@@ -179,19 +258,21 @@
       }
 
       .captions-panel {
-        background: #3a3a52;
+        background: var(--section-bg);
         border-radius: 10px;
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        transition: background 0.3s ease;
       }
 
       .captions-header {
-        background: #1e1e2e;
-        color: #e0e0e0;
+        background: var(--header-bg);
+        color: var(--header-text);
         padding: 20px;
         font-weight: 600;
         font-size: 1.1rem;
+        transition: background 0.3s ease, color 0.3s ease;
       }
 
       .captions-list {
@@ -203,13 +284,14 @@
       .caption-item {
         padding: 12px 15px;
         margin-bottom: 8px;
-        background: #2d2d44;
-        color: #e0e0e0;
+        background: var(--caption-item-bg);
+        color: var(--caption-item-text);
         border-radius: 8px;
         cursor: pointer;
         border-left: 4px solid transparent;
         font-size: 0.95rem;
         line-height: 1.4;
+        transition: background 0.3s ease, color 0.3s ease;
       }
 
       .caption-item.active {
@@ -232,19 +314,21 @@
       }
 
       .error {
-        background: #4a2c2c;
-        color: #ff6b6b;
+        background: var(--error-bg);
+        color: var(--error-text);
         padding: 20px;
         margin: 20px;
         border-radius: 10px;
         border-left: 4px solid #dc3545;
+        transition: background 0.3s ease, color 0.3s ease;
       }
 
       .no-captions {
         text-align: center;
-        color: #a0a0b0;
+        color: var(--text-muted);
         padding: 40px 20px;
         font-style: italic;
+        transition: color 0.3s ease;
       }
 
       @media (max-width: 968px) {
@@ -258,6 +342,13 @@
 
         .header {
           padding: 20px 15px;
+        }
+
+        .theme-switcher {
+          top: 15px;
+          right: 15px;
+          padding: 6px 12px;
+          font-size: 0.8rem;
         }
 
         .header h1 {
@@ -360,6 +451,13 @@
   <body>
     <div class="container">
       <div class="header">
+        <button
+          class="theme-switcher"
+          id="theme-switcher"
+          onclick="toggleTheme()"
+        >
+          🌙 Dark
+        </button>
         <h1>PyCaption</h1>
         <p>Watch YouTube videos with interactive captions</p>
       </div>
@@ -896,8 +994,43 @@
           }
         });
 
+      // Theme switching functionality
+      function toggleTheme() {
+        const body = document.body;
+        const switcher = document.getElementById("theme-switcher");
+        const currentTheme = body.getAttribute("data-theme");
+
+        if (currentTheme === "light") {
+          // Switch to dark theme
+          body.removeAttribute("data-theme");
+          switcher.innerHTML = "🌙 Dark";
+          localStorage.setItem("theme", "dark");
+        } else {
+          // Switch to light theme
+          body.setAttribute("data-theme", "light");
+          switcher.innerHTML = "☀️ Light";
+          localStorage.setItem("theme", "light");
+        }
+      }
+
+      // Load saved theme on page load
+      function loadSavedTheme() {
+        const savedTheme = localStorage.getItem("theme");
+        const body = document.body;
+        const switcher = document.getElementById("theme-switcher");
+
+        if (savedTheme === "light") {
+          body.setAttribute("data-theme", "light");
+          switcher.innerHTML = "☀️ Light";
+        } else {
+          body.removeAttribute("data-theme");
+          switcher.innerHTML = "🌙 Dark";
+        }
+      }
+
       // Load YouTube API when page loads
       window.addEventListener("load", () => {
+        loadSavedTheme();
         loadYouTubeAPI();
         initializeUpload();
       });
