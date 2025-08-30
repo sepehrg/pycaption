@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PyCaption - YouTube Video Captions</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: #2d2d44;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: #1e1e2e;
+        color: #e0e0e0;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .url-input-section {
+        padding: 30px;
+        background: #3a3a52;
+        border-bottom: 1px solid #4a4a62;
+      }
+
+      .input-group {
+        display: flex;
+        gap: 15px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .url-input {
+        flex: 1;
+        padding: 15px 20px;
+        border: 2px solid #5a5a72;
+        border-radius: 10px;
+        font-size: 16px;
+        background: #2d2d44;
+        color: #e0e0e0;
+        transition: border-color 0.3s ease;
+      }
+
+      .url-input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .url-input::placeholder {
+        color: #a0a0b0;
+      }
+
+      .load-btn {
+        padding: 15px 30px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+
+      .load-btn:hover {
+        background: #5a67d8;
+      }
+
+      .load-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        font-size: 18px;
+        color: #a0a0b0;
+      }
+
+      .spinner {
+        border: 3px solid #4a4a62;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .video-section {
+        display: none;
+        padding: 30px;
+      }
+
+      .video-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        height: 600px;
+      }
+
+      .video-player-wrapper {
+        background: #000;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .video-player {
+        width: 100%;
+        height: 100%;
+      }
+
+      .video-info {
+        background: #3a3a52;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+
+      .upload-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      }
+
+      .upload-btn:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a42a0 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .upload-btn:active {
+        transform: translateY(0);
+      }
+
+      .captions-panel {
+        background: #3a3a52;
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .captions-header {
+        background: #1e1e2e;
+        color: #e0e0e0;
+        padding: 20px;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .captions-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+      }
+
+      .caption-item {
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        background: #2d2d44;
+        color: #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        border-left: 4px solid transparent;
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+
+      .caption-item.active {
+        background: #667eea;
+        color: white;
+        border-left-color: #5a67d8;
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+
+      .caption-time {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+
+      .caption-text {
+        line-height: 1.3;
+      }
+
+      .error {
+        background: #4a2c2c;
+        color: #ff6b6b;
+        padding: 20px;
+        margin: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #dc3545;
+      }
+
+      .no-captions {
+        text-align: center;
+        color: #a0a0b0;
+        padding: 40px 20px;
+        font-style: italic;
+      }
+
+      @media (max-width: 968px) {
+        body {
+          padding: 10px;
+        }
+
+        .container {
+          border-radius: 10px;
+        }
+
+        .header {
+          padding: 20px 15px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+          margin-bottom: 5px;
+        }
+
+        .header p {
+          font-size: 1rem;
+        }
+
+        .url-input-section {
+          padding: 20px 15px;
+        }
+
+        .video-section {
+          padding: 15px;
+        }
+
+        .video-container {
+          grid-template-columns: 1fr;
+          height: auto;
+          gap: 15px;
+        }
+
+        .video-player-wrapper {
+          height: 250px;
+        }
+
+        .video-info {
+          padding: 15px;
+          margin-bottom: 15px;
+        }
+
+        .upload-section {
+          margin-top: 10px !important;
+        }
+
+        .captions-panel {
+          height: 450px;
+        }
+
+        .captions-header {
+          padding: 15px;
+          font-size: 1rem;
+        }
+
+        .captions-list {
+          padding: 10px;
+        }
+
+        .caption-item {
+          padding: 8px 10px;
+          margin-bottom: 4px;
+          font-size: 0.9rem;
+        }
+
+        .caption-time {
+          font-size: 0.75rem;
+          margin-bottom: 3px;
+        }
+
+        .input-group {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .url-input {
+          padding: 12px 15px;
+          font-size: 16px;
+        }
+
+        .load-btn {
+          padding: 12px 25px;
+          font-size: 16px;
+        }
+
+        .upload-btn {
+          padding: 10px 16px;
+          font-size: 0.95rem;
+        }
+
+        .loading {
+          padding: 30px 15px;
+          font-size: 16px;
+        }
+
+        .error {
+          margin: 15px;
+          padding: 15px;
+        }
+
+        .no-captions {
+          padding: 30px 15px;
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>PyCaption</h1>
+        <p>Watch YouTube videos with interactive captions</p>
+      </div>
+
+      <div class="url-input-section">
+        <div class="input-group">
+          <input
+            type="text"
+            class="url-input"
+            id="youtube-url"
+            placeholder="Enter YouTube URL (e.g., https://www.youtube.com/watch?v=...)"
+          />
+          <button class="load-btn" id="load-btn">Load Video</button>
+        </div>
+      </div>
+
+      <div class="loading" id="loading" style="display: none">
+        <div class="spinner"></div>
+        <p>Loading video...</p>
+      </div>
+
+      <div class="error" id="error" style="display: none"></div>
+
+      <div class="video-section" id="video-section">
+        <div class="video-info" id="video-info">
+          <div
+            class="upload-section"
+            id="upload-section"
+            style="margin-top: 15px"
+          >
+            <div class="upload-area" id="upload-area">
+              <input
+                type="file"
+                id="caption-file"
+                accept=".vtt,.srt,.txt"
+                style="display: none"
+              />
+              <button
+                class="upload-btn"
+                onclick="document.getElementById('caption-file').click()"
+              >
+                📁 Choose Caption File
+              </button>
+              <div
+                class="upload-formats"
+                style="margin-top: 8px; font-size: 0.9rem; color: #666"
+              >
+                Supports VTT, SRT, or TXT files
+              </div>
+              <div
+                class="upload-status"
+                id="upload-status"
+                style="margin-top: 10px; font-size: 0.9rem; color: #666"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="video-container">
+          <div class="video-player-wrapper">
+            <iframe
+              class="video-player"
+              id="youtube-player"
+              frameborder="0"
+              allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            >
+            </iframe>
+          </div>
+
+          <div class="captions-panel">
+            <div class="captions-header">Captions</div>
+            <div class="captions-list" id="captions-list">
+              <div class="no-captions">
+                No captions available for this video
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let videoData = null;
+      let currentCaptionIndex = -1;
+      let player = null;
+      let updateInterval = null;
+      let currentVideoId = null;
+
+      // Load YouTube API
+      function loadYouTubeAPI() {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName("script")[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      }
+
+      // YouTube API ready callback
+      function onYouTubeIframeAPIReady() {
+        console.log("YouTube API ready");
+        window.youtubeAPIReady = true;
+      }
+
+      // Create YouTube player
+      function createPlayer(videoId) {
+        console.log("Creating player for video ID:", videoId);
+
+        if (player) {
+          try {
+            player.destroy();
+          } catch (e) {
+            console.log("Error destroying previous player:", e);
+          }
+          player = null;
+        }
+
+        // Check if YouTube API is ready
+        if (typeof YT === "undefined" || typeof YT.Player === "undefined") {
+          console.log("YouTube API not ready yet, waiting...");
+          setTimeout(() => createPlayer(videoId), 500);
+          return;
+        }
+
+        // Wait a moment to ensure previous player is fully cleaned up
+        setTimeout(() => {
+          try {
+            console.log("Initializing YouTube player...");
+
+            if (!videoId || videoId.length !== 11) {
+              console.error("Invalid video ID format:", videoId);
+              showError("Invalid video ID format");
+              return;
+            }
+
+            // Create a new div element for the player
+            const playerContainer = document.querySelector(
+              ".video-player-wrapper"
+            );
+            const existingPlayer = document.getElementById("youtube-player");
+
+            if (existingPlayer) {
+              existingPlayer.remove();
+            }
+
+            // Create a new div for the player
+            const newPlayerDiv = document.createElement("div");
+            newPlayerDiv.id = "youtube-player";
+            newPlayerDiv.className = "video-player";
+            playerContainer.appendChild(newPlayerDiv);
+
+            // Try creating player with the new div
+            player = new YT.Player("youtube-player", {
+              videoId: videoId,
+              width: "100%",
+              height: "100%",
+              playerVars: {
+                autoplay: 0,
+                controls: 1,
+                enablejsapi: 1,
+                origin: window.location.origin,
+              },
+              events: {
+                onReady: onPlayerReady,
+                onStateChange: onPlayerStateChange,
+                onError: onPlayerError,
+              },
+            });
+            console.log("YouTube player created successfully");
+          } catch (e) {
+            console.error("Error creating YouTube player:", e);
+            showError(
+              "Failed to create video player. Please try refreshing the page."
+            );
+          }
+        }, 100);
+      }
+
+      function onPlayerReady(event) {
+        console.log("Player ready");
+        startCaptionSync();
+      }
+
+      function onPlayerStateChange(event) {
+        if (event.data === YT.PlayerState.PLAYING) {
+          startCaptionSync();
+        } else if (event.data === YT.PlayerState.PAUSED) {
+          stopCaptionSync();
+        }
+      }
+
+      function onPlayerError(event) {
+        console.error("YouTube player error:", event.data);
+        let errorMessage = "Video playback error";
+
+        switch (event.data) {
+          case 2:
+            errorMessage = "Invalid video ID";
+            break;
+          case 5:
+            errorMessage = "Video not available in HTML5 player";
+            break;
+          case 100:
+            errorMessage = "Video not found or private";
+            break;
+          case 101:
+          case 150:
+            errorMessage = "Video not allowed to be played in embedded players";
+            break;
+        }
+
+        showError(errorMessage + ". Please try a different video.");
+      }
+
+      function startCaptionSync() {
+        if (updateInterval) {
+          clearInterval(updateInterval);
+        }
+
+        updateInterval = setInterval(() => {
+          try {
+            if (
+              player &&
+              player.getCurrentTime &&
+              typeof player.getCurrentTime === "function"
+            ) {
+              const currentTime = player.getCurrentTime();
+              if (typeof currentTime === "number" && !isNaN(currentTime)) {
+                updateActiveCaption(currentTime);
+              }
+            }
+          } catch (e) {
+            console.log("Error getting current time:", e);
+          }
+        }, 100);
+      }
+
+      function stopCaptionSync() {
+        if (updateInterval) {
+          clearInterval(updateInterval);
+          updateInterval = null;
+        }
+      }
+
+      function updateActiveCaption(currentTime) {
+        if (!videoData || !videoData.captions) return;
+
+        const captions = videoData.captions;
+        let activeIndex = -1;
+
+        for (let i = 0; i < captions.length; i++) {
+          if (
+            currentTime >= captions[i].start &&
+            currentTime <= captions[i].end
+          ) {
+            activeIndex = i;
+            break;
+          }
+        }
+
+        if (activeIndex !== currentCaptionIndex) {
+          // Remove previous active caption
+          if (currentCaptionIndex >= 0) {
+            const prevElement = document.querySelector(
+              `[data-caption-index="${currentCaptionIndex}"]`
+            );
+            if (prevElement) {
+              prevElement.classList.remove("active");
+            }
+          }
+
+          // Set new active caption
+          currentCaptionIndex = activeIndex;
+          if (currentCaptionIndex >= 0) {
+            const activeElement = document.querySelector(
+              `[data-caption-index="${currentCaptionIndex}"]`
+            );
+            if (activeElement) {
+              activeElement.classList.add("active");
+
+              // Auto-scroll to active caption
+              const captionsList = document.getElementById("captions-list");
+              const offsetTop =
+                activeElement.offsetTop - captionsList.offsetTop;
+              const scrollTop =
+                offsetTop -
+                captionsList.clientHeight / 2 +
+                activeElement.clientHeight / 2;
+
+              captionsList.scrollTo({
+                top: scrollTop,
+                behavior: "smooth",
+              });
+            }
+          }
+        }
+      }
+
+      function formatTime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+
+        if (hours > 0) {
+          return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+            .toString()
+            .padStart(2, "0")}`;
+        } else {
+          return `${minutes}:${secs.toString().padStart(2, "0")}`;
+        }
+      }
+
+      function seekToTime(time) {
+        try {
+          if (player && player.seekTo && typeof player.seekTo === "function") {
+            player.seekTo(time, true);
+          }
+        } catch (e) {
+          console.log("Error seeking to time:", e);
+        }
+      }
+
+      function displayCaptions(captions) {
+        console.log("displayCaptions called with:", captions);
+        const captionsList = document.getElementById("captions-list");
+
+        if (!captions || captions.length === 0) {
+          captionsList.innerHTML =
+            '<div class="no-captions">No captions available for this video</div>';
+          return;
+        }
+
+        const captionsHTML = captions
+          .map(
+            (caption, index) => `
+                  <div class="caption-item" data-caption-index="${index}" onclick="seekToTime(${
+              caption.start
+            })">
+                      <div class="caption-time">${formatTime(
+                        caption.start
+                      )}</div>
+                      <div class="caption-text">${caption.text}</div>
+                  </div>
+              `
+          )
+          .join("");
+
+        captionsList.innerHTML = captionsHTML;
+      }
+
+      function showError(message) {
+        const errorDiv = document.getElementById("error");
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+      }
+
+      function hideError() {
+        document.getElementById("error").style.display = "none";
+      }
+
+      function showLoading() {
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("video-section").style.display = "none";
+        hideError();
+      }
+
+      function hideLoading() {
+        document.getElementById("loading").style.display = "none";
+      }
+
+      async function loadVideo() {
+        const url = document.getElementById("youtube-url").value.trim();
+
+        if (!url) {
+          showError("Please enter a YouTube URL");
+          return;
+        }
+
+        showLoading();
+
+        try {
+          const response = await fetch("/process_video", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url: url }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to process video");
+          }
+
+          videoData = data;
+          console.log("Video data received:", data);
+
+          // Show video section first
+          hideLoading();
+          document.getElementById("video-section").style.display = "block";
+
+          // Create YouTube player
+          createPlayer(data.video_id);
+
+          // Display captions
+          displayCaptions(data.captions);
+
+          // Enable upload functionality
+          setCurrentVideoId(data.video_id);
+        } catch (error) {
+          hideLoading();
+          showError(error.message);
+        }
+      }
+
+      // Caption upload functionality
+      function initializeUpload() {
+        const fileInput = document.getElementById("caption-file");
+        fileInput.addEventListener("change", handleFileUpload);
+      }
+
+      function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+          handleFileSelection(file);
+        }
+      }
+
+      function handleFileSelection(file) {
+        if (!currentVideoId) {
+          showUploadStatus("❌ Please load a video first", "error");
+          return;
+        }
+
+        // Check file type
+        const allowedTypes = ["vtt", "srt", "txt"];
+        const fileExtension = file.name.split(".").pop().toLowerCase();
+
+        if (!allowedTypes.includes(fileExtension)) {
+          showUploadStatus("❌ Please upload a VTT, SRT, or TXT file", "error");
+          return;
+        }
+
+        // Check file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          showUploadStatus(
+            "❌ File too large. Please use files under 5MB",
+            "error"
+          );
+          return;
+        }
+
+        uploadCaptionFile(file);
+      }
+
+      async function uploadCaptionFile(file) {
+        showUploadStatus("🔄 Uploading caption file...", "loading");
+
+        try {
+          const formData = new FormData();
+          formData.append("caption_file", file);
+          formData.append("video_id", currentVideoId);
+
+          const response = await fetch("/upload_captions", {
+            method: "POST",
+            body: formData,
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            showUploadStatus(`✅ ${result.message}`, "success");
+
+            // Replace current captions with uploaded ones
+            displayCaptions(result.captions);
+
+            // Update global video data
+            if (videoData) {
+              videoData.captions = result.captions;
+            }
+
+            console.log(`Loaded ${result.count} captions from uploaded file`);
+          } else {
+            showUploadStatus(`❌ ${result.error || "Upload failed"}`, "error");
+          }
+        } catch (error) {
+          console.error("Upload error:", error);
+          showUploadStatus("❌ Upload failed - check connection", "error");
+        }
+      }
+
+      function showUploadStatus(message, type) {
+        const statusEl = document.getElementById("upload-status");
+        if (statusEl) {
+          statusEl.textContent = message;
+          statusEl.style.color =
+            type === "error"
+              ? "#e74c3c"
+              : type === "success"
+              ? "#27ae60"
+              : type === "loading"
+              ? "#3498db"
+              : "#666";
+
+          // Clear success/loading messages after delay
+          if (type === "success") {
+            setTimeout(() => {
+              if (statusEl.textContent === message) {
+                statusEl.textContent = "Ready for another upload";
+                statusEl.style.color = "#666";
+              }
+            }, 5000);
+          }
+        }
+      }
+
+      // Update currentVideoId when video loads
+      function setCurrentVideoId(videoId) {
+        currentVideoId = videoId;
+        const uploadSection = document.getElementById("upload-section");
+        if (uploadSection) {
+          uploadSection.style.display = videoId ? "block" : "none";
+        }
+      }
+
+      // Event listeners
+      document.getElementById("load-btn").addEventListener("click", loadVideo);
+
+      document
+        .getElementById("youtube-url")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            loadVideo();
+          }
+        });
+
+      // Load YouTube API when page loads
+      window.addEventListener("load", () => {
+        loadYouTubeAPI();
+        initializeUpload();
+      });
+    </script>
+  </body>
+</html>
